@@ -1,18 +1,18 @@
 import { useState } from 'react'
-import { emptyDraft } from '../model'
+import { draftFromProduct, emptyDraft } from '../model'
 import { ProductFields } from '../productFields'
 import { useStore } from '../store'
-import type { ProductDraft } from '../types'
+import type { Product, ProductDraft } from '../types'
 import { Modal } from '../ui'
 
 function blankRows(count: number): ProductDraft[] {
   return Array.from({ length: count }, () => emptyDraft())
 }
 
-export function ProductCreateDialog({ onClose }: { onClose: () => void }) {
+export function ProductCreateDialog({ onClose, product }: { onClose: () => void; product?: Product }) {
   const { saveProduct, saveProducts } = useStore()
   const [mode, setMode] = useState<'one' | 'sheet'>('one')
-  const [draft, setDraft] = useState<ProductDraft>(() => emptyDraft())
+  const [draft, setDraft] = useState<ProductDraft>(() => product ? draftFromProduct(product) : emptyDraft())
   const [rows, setRows] = useState<ProductDraft[]>(() => blankRows(5))
 
   function patchRow(key: string, patch: Partial<ProductDraft>) {
@@ -20,31 +20,31 @@ export function ProductCreateDialog({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <Modal title="商品建档" wide={mode === 'sheet'} onClose={onClose}>
-      <div className="tabs" role="tablist">
+    <Modal title={product ? '编辑商品档案' : '商品建档'} wide={mode === 'sheet'} onClose={onClose}>
+      {!product ? <div className="tabs" role="tablist">
         <button type="button" className={mode === 'one' ? 'on' : ''} onClick={() => setMode('one')}>
           单条录入
         </button>
         <button type="button" className={mode === 'sheet' ? 'on' : ''} onClick={() => setMode('sheet')}>
           表格录入
         </button>
-      </div>
+      </div> : null}
       {mode === 'one' ? (
         <form
           onSubmit={(event) => {
             event.preventDefault()
-            if (saveProduct(draft)) onClose()
+            if (saveProduct(draft, product?.id)) onClose()
           }}
         >
           <ProductFields draft={draft} allowGenerate onChange={(patch) => setDraft((current) => ({ ...current, ...patch }))} />
           <p className="sheet-note">图片、编码、名称、成本价、材质、重量、供应商、补货周期都要填。编码可以点生成。</p>
           <div className="form-actions">
             <button className="btn primary" type="submit">
-              保存建档
+              {product ? '保存修改' : '保存建档'}
             </button>
           </div>
         </form>
-      ) : (
+      ) : !product ? (
         <form
           onSubmit={(event) => {
             event.preventDefault()
@@ -113,7 +113,7 @@ export function ProductCreateDialog({ onClose }: { onClose: () => void }) {
             </button>
           </div>
         </form>
-      )}
+      ) : null}
     </Modal>
   )
 }

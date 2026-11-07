@@ -12,6 +12,7 @@ export function ProductInfoPage() {
   const [query, setQuery] = useState('')
   const [detailId, setDetailId] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const day = yesterday()
   const rows = useMemo(
     () => data.products.filter((product) => hit(query, [product.code, product.name, product.supplier, product.material])),
@@ -19,6 +20,7 @@ export function ProductInfoPage() {
   )
   const pager = usePager(rows, query)
   const current = detailId ? findProduct(data, detailId) : undefined
+  const editing = editingId ? findProduct(data, editingId) : undefined
 
   const asked = useRef(createAsk)
   useEffect(() => {
@@ -106,6 +108,7 @@ export function ProductInfoPage() {
                     <th className="num">重量(kg)</th>
                     <th>供应商</th>
                     <th className="num">补货周期(天)</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -134,6 +137,7 @@ export function ProductInfoPage() {
                         <td className="num">{product.weight}</td>
                         <td>{product.supplier}</td>
                         <td className="num">{product.replenishDays}</td>
+                        <td><button type="button" className="btn ghost" onClick={() => setEditingId(product.id)}>编辑商品</button></td>
                       </tr>
                     )
                   })}
@@ -147,6 +151,7 @@ export function ProductInfoPage() {
       </div>
       )}
       {creating ? <ProductCreateDialog onClose={() => setCreating(false)} /> : null}
+      {editing ? <ProductCreateDialog product={editing} onClose={() => setEditingId(null)} /> : null}
     </Page>
   )
 }

@@ -1,7 +1,8 @@
 export type PageId =
   | 'orders'
-  | 'order-search'
+  | 'product-scan'
   | 'product-info'
+  | 'product-edit'
   | 'combo'
   | 'inventory'
   | 'purchase'
@@ -20,13 +21,14 @@ export const NAV: { group: string; items: NavItem[] }[] = [
     group: '订单',
     items: [
       { id: 'orders', label: '已发货' },
-      { id: 'order-search', label: '订单检索' },
+      { id: 'product-scan', label: '商品扫码' },
     ],
   },
   {
     group: '商品管理',
     items: [
       { id: 'product-info', label: '商品信息' },
+      { id: 'product-edit', label: '编辑商品档案' },
       { id: 'combo', label: '组合商品信息' },
     ],
   },

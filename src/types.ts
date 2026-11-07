@@ -1,6 +1,7 @@
 export type Product = {
   id: string
   code: string
+  barcode: string
   name: string
   image: string
   costPrice: number
@@ -15,6 +16,7 @@ export type Product = {
 export type ProductDraft = {
   key: string
   code: string
+  barcode: string
   name: string
   image: string
   costPrice: string

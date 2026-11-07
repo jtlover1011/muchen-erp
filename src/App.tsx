@@ -7,16 +7,18 @@ import { ComboPage } from './pages/ComboPage'
 import { InboundPage } from './pages/InboundPage'
 import { InventoryPage } from './pages/InventoryPage'
 import { OrdersPage } from './pages/OrdersPage'
-import { OrderSearchPage } from './pages/OrderSearchPage'
 import { ProductInfoPage } from './pages/ProductInfoPage'
+import { ProductEditPage } from './pages/ProductEditPage'
+import { ProductScanPage } from './pages/ProductScanPage'
 import { PurchasePage } from './pages/PurchasePage'
 import { TransitPage } from './pages/TransitPage'
 import { useStore } from './store'
 
 const views: Record<PageId, ComponentType> = {
   orders: OrdersPage,
-  'order-search': OrderSearchPage,
+  'product-scan': ProductScanPage,
   'product-info': ProductInfoPage,
+  'product-edit': ProductEditPage,
   combo: ComboPage,
   inventory: InventoryPage,
   purchase: PurchasePage,
@@ -59,7 +61,7 @@ export function App() {
   const [createAsk, setCreateAsk] = useState(0)
   const [page, setPage] = useState<PageId>(() => {
     const id = location.hash.replace('#', '')
-    return isPage(id) ? id : 'inventory'
+    return isPage(id) ? id : id === 'order-search' ? 'orders' : 'inventory'
   })
   const pending = data.purchases.filter((purchase) => purchase.receivedQty < purchase.qty).length
   const View = views[page]
@@ -70,9 +72,14 @@ export function App() {
   }, [page])
 
   useEffect(() => {
+    if (location.hash === '#order-search') setPage('orders')
+  }, [])
+
+  useEffect(() => {
     const onHash = () => {
       const id = location.hash.replace('#', '')
       if (isPage(id)) setPage(id)
+      else if (id === 'order-search') setPage('orders')
     }
     window.addEventListener('hashchange', onHash)
     return () => window.removeEventListener('hashchange', onHash)

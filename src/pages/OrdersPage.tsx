@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { formatShipTime, hit, money, nowLocalMinute, qty, round2 } from '../format'
+import { formatShipTime, money, nowLocalMinute, qty, round2, shipDay } from '../format'
 import { orderProfit, quoteShipment } from '../model'
 import { useGo } from '../go'
 import { useStore } from '../store'
@@ -21,16 +21,32 @@ function blankForm() {
 export function OrdersPage() {
   const { data, saveOrder, removeOrder } = useStore()
   const go = useGo()
-  const [query, setQuery] = useState('')
+  const [from, setFrom] = useState('')
+  const [to, setTo] = useState('')
+  const [orderNo, setOrderNo] = useState('')
+  const [trackingNo, setTrackingNo] = useState('')
+  const [shop, setShop] = useState('')
+  const [comboCode, setComboCode] = useState('')
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState(blankForm)
+  const invalid = Boolean(from && to && from > to)
   const rows = useMemo(() => {
+    if (invalid) return []
     return data.orders
-      .filter((order) => hit(query, [order.orderNo, order.shop, order.comboCode, order.trackingNo]))
+      .filter((order) => {
+        const day = shipDay(order.shipTime)
+        if (from && day < from) return false
+        if (to && day > to) return false
+        if (!order.orderNo.toLowerCase().includes(orderNo.trim().toLowerCase())) return false
+        if (!order.trackingNo.toLowerCase().includes(trackingNo.trim().toLowerCase())) return false
+        if (!order.shop.toLowerCase().includes(shop.trim().toLowerCase())) return false
+        if (!order.comboCode.toLowerCase().includes(comboCode.trim().toLowerCase())) return false
+        return true
+      })
       .slice()
       .sort((a, b) => b.shipTime.localeCompare(a.shipTime) || b.createdAt.localeCompare(a.createdAt))
-  }, [data.orders, query])
-  const pager = usePager(rows, query)
+  }, [comboCode, data.orders, from, invalid, orderNo, shop, to, trackingNo])
+  const pager = usePager(rows, `${from}|${to}|${orderNo}|${trackingNo}|${shop}|${comboCode}`)
 
   const quote = quoteShipment(data, form.comboCode, form.qty)
   const profitText =
@@ -47,17 +63,61 @@ export function OrdersPage() {
       title="已发货"
       desc="只选组合编码。销售件数是套数，按组合里的每套数量扣每个商品的库存。订单编号不能重复，避免同一单算两次。"
       extra={
-        <>
-          <input className="search" value={query} placeholder="搜订单编号、店铺、单号" onChange={(event) => setQuery(event.target.value)} />
-          <button type="button" className="btn ghost" onClick={() => go('order-search')}>
-            订单检索
-          </button>
-          <button type="button" className="btn primary" onClick={() => setOpen((value) => !value)}>
-            {open ? '收起' : '登记发货'}
-          </button>
-        </>
+        <button type="button" className="btn primary" onClick={() => setOpen((value) => !value)}>
+          {open ? '收起' : '登记发货'}
+        </button>
       }
     >
+      <form
+        className="card card-pad"
+        onSubmit={(event) => {
+          event.preventDefault()
+        }}
+      >
+        <div className="form-grid">
+          <label className="field">
+            <span>发货时间起</span>
+            <input type="date" value={from} onChange={(event) => setFrom(event.target.value)} />
+          </label>
+          <label className="field">
+            <span>发货时间止</span>
+            <input type="date" value={to} onChange={(event) => setTo(event.target.value)} />
+          </label>
+          <label className="field">
+            <span>订单编号</span>
+            <input value={orderNo} onChange={(event) => setOrderNo(event.target.value)} autoComplete="off" />
+          </label>
+          <label className="field">
+            <span>快递单号</span>
+            <input value={trackingNo} onChange={(event) => setTrackingNo(event.target.value)} autoComplete="off" />
+          </label>
+          <label className="field">
+            <span>店铺名称</span>
+            <input value={shop} onChange={(event) => setShop(event.target.value)} autoComplete="off" />
+          </label>
+          <label className="field">
+            <span>组合编码</span>
+            <input value={comboCode} onChange={(event) => setComboCode(event.target.value)} autoComplete="off" />
+          </label>
+        </div>
+        <div className="form-actions">
+          <button
+            type="button"
+            className="btn ghost"
+            onClick={() => {
+              setFrom('')
+              setTo('')
+              setOrderNo('')
+              setTrackingNo('')
+              setShop('')
+              setComboCode('')
+            }}
+          >
+            清空条件
+          </button>
+        </div>
+      </form>
+      {invalid ? <p className="warn-line">开始时间不能晚于结束时间。</p> : null}
       {open ? (
         <form
           className="card card-pad"

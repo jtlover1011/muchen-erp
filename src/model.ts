@@ -13,6 +13,7 @@ export function emptyDraft(): ProductDraft {
   return {
     key: uid(),
     code: '',
+    barcode: '',
     name: '',
     image: '',
     costPrice: '',
@@ -28,6 +29,7 @@ export function draftFromProduct(product: Product): ProductDraft {
   return {
     key: product.id,
     code: product.code,
+    barcode: product.barcode,
     name: product.name,
     image: product.image,
     costPrice: String(product.costPrice),
@@ -55,6 +57,7 @@ function asProduct(raw: unknown): Product | null {
   return {
     id: row.id,
     code: row.code,
+    barcode: str(row.barcode),
     name: row.name,
     image,
     costPrice: num(row.costPrice),
@@ -260,7 +263,7 @@ export function suggestCode(products: Pick<Product, 'code'>[], extra: string[] =
 }
 
 function rowTouched(draft: ProductDraft): boolean {
-  return [draft.name, draft.code, draft.costPrice, draft.material, draft.weight, draft.volume, draft.supplier, draft.replenishDays, draft.image].some(
+  return [draft.name, draft.code, draft.barcode, draft.costPrice, draft.material, draft.weight, draft.volume, draft.supplier, draft.replenishDays, draft.image].some(
     (value) => value.trim() !== '',
   )
 }
@@ -274,6 +277,8 @@ export function parseProductDraft(draft: ProductDraft, data: Data, opt: { selfId
   const comboCodes = comboList(data).map((combo) => combo.code)
   if (code.length > 40) throw new BizError('商品编码最多 40 个字符')
   if (data.products.some((product) => product.code === code && product.id !== opt.selfId)) throw new BizError(`商品编码 ${code} 已存在`)
+  const barcode = limitText(draft.barcode, '商品条码', 80)
+  if (barcode && data.products.some((product) => product.barcode === barcode && product.id !== opt.selfId)) throw new BizError(`商品条码 ${barcode} 已绑定其他商品`)
   if (comboCodes.includes(code)) throw new BizError(`编码 ${code} 已被组合商品使用`)
   const material = limitText(draft.material, '材质', 40)
   if (!material) throw new BizError('请填写材质')
@@ -285,6 +290,7 @@ export function parseProductDraft(draft: ProductDraft, data: Data, opt: { selfId
   if (opt.requireImage && !image) throw new BizError('请上传商品图片')
   return {
     code,
+    barcode,
     name,
     image,
     costPrice: mustDecimal(draft.costPrice, '成本价', 2, true),

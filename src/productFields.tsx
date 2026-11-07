@@ -26,21 +26,14 @@ export function ProductFields({
   }
 
   return (
-    <div className="form-grid">
+    <div className="form-grid product-create-grid">
       <label className="field">
         <span>商品名称</span>
         <input value={draft.name} required onChange={(event) => onChange({ name: event.target.value })} autoComplete="off" />
       </label>
       <label className="field">
-        <span>商品编码</span>
-        <span className="code-line">
-          <input value={draft.code} required onChange={(event) => onChange({ code: event.target.value })} autoComplete="off" />
-          {allowGenerate ? (
-            <button type="button" className="btn ghost" onClick={() => onChange({ code: suggestCode() })}>
-              生成编码
-            </button>
-          ) : null}
-        </span>
+        <span>商品条码（选填）</span>
+        <input value={draft.barcode} onChange={(event) => onChange({ barcode: event.target.value })} autoComplete="off" />
       </label>
       <label className="field">
         <span>成本价（元）</span>
@@ -62,7 +55,7 @@ export function ProductFields({
         <span>补货周期（天）</span>
         <input value={draft.replenishDays} required inputMode="numeric" onChange={(event) => onChange({ replenishDays: event.target.value })} autoComplete="off" />
       </label>
-      <div className="field span-2">
+      <div className="field product-image-field">
         <span>商品图片</span>
         <div className="image-row">
           <Thumb src={draft.image} name={draft.name} lg />
@@ -86,6 +79,17 @@ export function ProductFields({
           />
         </div>
       </div>
+      <label className="field product-code-field">
+        <span>商品编码</span>
+        <span className="code-line">
+          <input value={draft.code} required onChange={(event) => onChange({ code: event.target.value })} autoComplete="off" />
+          {allowGenerate ? (
+            <button type="button" className="btn ghost" onClick={() => onChange({ code: suggestCode() })}>
+              生成编码
+            </button>
+          ) : null}
+        </span>
+      </label>
     </div>
   )
 }
